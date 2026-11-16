@@ -12,3 +12,6 @@ Physical iPhone/Android (not verified):
 - Hit guardrail with vibration on/off; confirm sound volume control. iOS haptic support may require native integration.
 - Switch away and back: game pauses, resume re-centers sensor; no stuck brake/drift.
 - Check controls fit device safe area and note FPS/heat. Send device model, OS, screenshot/video, expected vs actual behavior.
+
+## Course guidance revision
+Course guidance update: follow gold road arrows; confirm next CP label is cyan and changes after passing. ESC pauses/resumes outside settings. Try PAUSE > RETURN TO TRACK after hitting a wall; race time/checkpoints must remain. Check the expanded pause menu fits on your screen.

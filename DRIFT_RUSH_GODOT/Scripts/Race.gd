@@ -1,4 +1,5 @@
 extends Node3D
+var guidance: Node3D
 var kart: CharacterBody3D
 var camera: Camera3D
 var visual: Node3D
@@ -96,6 +97,9 @@ func _ready():
  box(self,Vector3(0,7,65),Vector3(0.8,1.5,18),Color("132e50"))
  for z in [56,74]:
   box(self,Vector3(0,3.5,z),Vector3(0.6,7,0.6),Color("30d5f5"))
+ guidance=preload("res://Scripts/TrackGuidance.gd").new()
+ add_child(guidance)
+ guidance.setup(RADIUS)
  kart = CharacterBody3D.new()
  add_child(kart)
  var col := CollisionShape3D.new()
@@ -309,6 +313,7 @@ func _physics_process(dt: float):
   desired=kart.position+Vector3(-5,2.8,5)
  camera.position=camera.position.lerp(desired,1-exp(-5*dt))
  camera.look_at(kart.position+Vector3.UP)
+ guidance.show_next(checkpoint)
  ui.update_hud()
 
 func _notification(what: int):
@@ -328,3 +333,13 @@ func recover_to_track():
  wrong_way=false
  recovery_notice=2.0
  camera.position=kart.position+kart.global_basis.z*7+Vector3.UP*4
+
+func resume_on_track():
+ recover_to_track()
+ if paused: toggle_pause()
+
+func _unhandled_key_input(event: InputEvent):
+ if event is InputEventKey and event.pressed and not event.echo:
+  if event.physical_keycode==KEY_ESCAPE and running and not ui.settings_panel.visible:
+   toggle_pause()
+   get_viewport().set_input_as_handled()

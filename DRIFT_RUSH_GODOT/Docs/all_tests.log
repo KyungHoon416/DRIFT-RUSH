@@ -1,0 +1,11 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS: tilt calibration, sensor fallback, deadzone, inversion, settings persistence, touch mode, settings UI, minimap
+PASS: acceleration, 3D movement, boost consumption, pause, reset, lobby/race/result transitions, countdown, input clearing
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS: 3 ordered laps, results, lap sum/best, recovery, preserved progress, boost effects/pause/expiry, reset
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS: keyboard steer/drift/brake/boost, drift effects, manual rescue, checkpoint guidance
+ALL 3 SUITES PASSED

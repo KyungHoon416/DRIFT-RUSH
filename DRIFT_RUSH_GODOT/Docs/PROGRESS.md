@@ -9,3 +9,6 @@ Added DrivingSettings.gd, Minimap.gd; settings UI from lobby/pause, sensor fallb
 
 ## Driving feedback revision
 Added drift visual lean and CPU sparks, boost exhaust/synthesized sound/FOV, three-lap splits and session best, safe-position recovery preserving race progress. Added race_flow integration suite.
+
+## Course guidance revision
+Added TrackGuidance.gd: painted direction chevrons, eight labeled gates and highlighted next gate. Added pause-menu manual recovery and Escape pause toggle. New keyboard suite injects actual input events into the Godot loop.
