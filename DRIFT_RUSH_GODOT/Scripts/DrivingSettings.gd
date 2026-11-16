@@ -6,10 +6,14 @@ var tilt_enabled := true
 var vibration := true
 var volume := 0.7
 var neutral := 0.0
+var kart_color := "ff8b27"
+const COLORS = ["ff8b27", "32c7e8", "ed80b6", "99dc81"]
 const PATH = "user://driving_settings.cfg"
 func load_settings(path := PATH):
  var cfg := ConfigFile.new()
  if cfg.load(path)!=OK: return
+ var saved_color: String = str(cfg.get_value("garage","color","ff8b27"))
+ kart_color=saved_color if saved_color in COLORS else "ff8b27"
  sensitivity=clampf(float(cfg.get_value("controls","sensitivity",1.0)),0.5,2.0)
  deadzone=clampf(float(cfg.get_value("controls","deadzone",0.08)),0.0,0.3)
  invert=bool(cfg.get_value("controls","invert",false))
@@ -18,6 +22,7 @@ func load_settings(path := PATH):
  volume=clampf(float(cfg.get_value("feedback","volume",0.7)),0,1)
 func save_settings(path := PATH) -> Error:
  var cfg := ConfigFile.new()
+ cfg.set_value("garage","color",kart_color)
  cfg.set_value("controls","sensitivity",sensitivity)
  cfg.set_value("controls","deadzone",deadzone)
  cfg.set_value("controls","invert",invert)

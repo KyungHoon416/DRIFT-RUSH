@@ -23,3 +23,7 @@ Driving assistance revision: open CONTROLS & SOUND from lobby or pause. Tilt ste
 Driving feedback: drift to charge, SHIFT/BOOST at full gauge; boost lasts 2.5 seconds. Results include lap splits and session best. Automatic off-track recovery preserves time and checkpoint progress. Run Tests/race_flow.gd for deterministic race integration tests; see Docs/DEVICE_TEST_CHECKLIST.md for manual checks.
 
 Course guidance: gold road chevrons indicate forward direction; cyan CP marker indicates the next gate. ESC toggles pause. RETURN TO TRACK in pause rescues a stuck kart without resetting progress. Run all checks: `python3 Tests/run_tests.py` (set GODOT_BIN to your Godot executable if needed).
+
+## Frontend update
+Current entry flow: PLAY → SELECT TRACK → START RACE. HOW TO DRIVE shows sensor status, calibration and driving instructions. GARAGE provides four paint colors persisted with driving settings and camera rotation buttons; appearance does not affect handling. Friends, item race and Neon City are disabled and labeled as in development. The map thumbnail is a vector course overview, not a rendered gameplay preview.
+User has upgraded their Mac to Godot 4.7.2; cloud validation remains Godot 4.6.3. No 4.7.2 or iOS/Android build verification is claimed. Use export templates matching your installed engine.

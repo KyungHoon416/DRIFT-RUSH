@@ -6,7 +6,7 @@ import sys
 
 root = pathlib.Path(__file__).resolve().parents[1]
 engine = os.environ.get("GODOT_BIN", "godot")
-for name in ("smoke", "race_flow", "keyboard"):
+for name in ("smoke", "race_flow", "keyboard", "frontend"):
     try:
         result = subprocess.run(
             [engine, "--headless", "--path", str(root), "--script", f"Tests/{name}.gd"],
@@ -19,4 +19,4 @@ for name in ("smoke", "race_flow", "keyboard"):
     print(output, end="")
     if result.returncode or "ERROR:" in output or "PASS:" not in output:
         sys.exit(1)
-print("ALL 3 SUITES PASSED")
+print("ALL 4 SUITES PASSED")

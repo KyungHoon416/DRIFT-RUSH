@@ -1,4 +1,7 @@
 extends Node3D
+var garage_view := false
+var preview_angle := 0.7
+var body_panels: Array[MeshInstance3D] = []
 var guidance: Node3D
 var kart: CharacterBody3D
 var camera: Camera3D
@@ -195,6 +198,12 @@ func _ready():
   bytes.encode_s16(i*2,int(sin(i*0.12)*18000*(1.0-i/4410.0)))
  wav.data = bytes
  audio.stream = wav
+ for child in visual.get_children():
+  if child is MeshInstance3D and child.material_override is StandardMaterial3D:
+   var color: Color = child.material_override.albedo_color
+   if color.is_equal_approx(Color("ff8b27")) or color.is_equal_approx(Color("e75c20")):
+    body_panels.append(child)
+ set_kart_color(settings.kart_color)
  ui = preload("res://Scripts/RaceUI.gd").new()
  add_child(ui)
  ui.setup(self)
@@ -210,12 +219,14 @@ func activate_boost():
   boost_audio.volume_db=linear_to_db(maxf(settings.volume,0.0001))
   if settings.volume>0: boost_audio.play()
 func start_race():
+ garage_view=false
  settings.calibrate(Input.get_gravity())
  reset()
  running=true
  countdown=3.0
  ui.show_race()
 func return_lobby():
+ garage_view=false
  reset()
  running=false
  ui.show_lobby()
@@ -311,6 +322,8 @@ func _physics_process(dt: float):
  var desired := kart.position+kart.global_basis.z*7+Vector3.UP*4
  if not running:
   desired=kart.position+Vector3(-5,2.8,5)
+  if garage_view:
+   desired=kart.position+Vector3(sin(preview_angle)*5,2.2,cos(preview_angle)*5)
  camera.position=camera.position.lerp(desired,1-exp(-5*dt))
  camera.look_at(kart.position+Vector3.UP)
  guidance.show_next(checkpoint)
@@ -343,3 +356,9 @@ func _unhandled_key_input(event: InputEvent):
   if event.physical_keycode==KEY_ESCAPE and running and not ui.settings_panel.visible:
    toggle_pause()
    get_viewport().set_input_as_handled()
+
+func set_kart_color(hex: String):
+ if not hex in settings.COLORS: return
+ settings.kart_color=hex
+ for panel in body_panels:
+  panel.material_override.albedo_color=Color(hex)

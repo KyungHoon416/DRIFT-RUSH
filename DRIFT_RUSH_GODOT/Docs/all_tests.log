@@ -8,4 +8,7 @@ PASS: 3 ordered laps, results, lap sum/best, recovery, preserved progress, boost
 Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
 
 PASS: keyboard steer/drift/brake/boost, drift effects, manual rescue, checkpoint guidance
-ALL 3 SUITES PASSED
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS: frontend navigation, 1280x720 button bounds, locked modes, garage camera/materials/persistence, race transition
+ALL 4 SUITES PASSED

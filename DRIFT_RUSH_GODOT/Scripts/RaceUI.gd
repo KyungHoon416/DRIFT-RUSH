@@ -1,4 +1,5 @@
 extends CanvasLayer
+var flow: RefCounted
 var race: Node3D
 var lobby: Control
 var race_hud: Control
@@ -25,6 +26,10 @@ func label(text: String, size: int) -> Label:
 func style(color: Color) -> StyleBoxFlat:
  var s := StyleBoxFlat.new()
  s.bg_color=color
+ s.border_color=Color(0.25,0.65,0.86,0.5)
+ s.set_border_width_all(1)
+ s.shadow_color=Color(0,0.02,0.05,0.4)
+ s.shadow_size=6
  s.corner_radius_top_left=14
  s.corner_radius_top_right=14
  s.corner_radius_bottom_left=14
@@ -42,6 +47,9 @@ func button(text: String, fn: Callable, accent := false, hold: Callable = Callab
  b.add_theme_stylebox_override("normal",style(Color("ef9b30") if accent else Color("17354f")))
  b.add_theme_stylebox_override("hover",style(Color("277592")))
  b.add_theme_stylebox_override("pressed",style(Color("1d9dbb")))
+ b.add_theme_stylebox_override("focus",style(Color(0.1,0.5,0.7,0.4)))
+ b.add_theme_stylebox_override("disabled",style(Color("24303f")))
+ b.add_theme_color_override("font_disabled_color",Color("8996a8"))
  b.pressed.connect(fn)
  if hold.is_valid():
   b.button_down.connect(func(): hold.call(true))
@@ -66,15 +74,8 @@ func stack(parent: Control, rect: Rect2) -> VBoxContainer:
 func setup(owner_race: Node3D):
  race=owner_race
  lobby=root_control()
- var v := stack(lobby,Rect2(48,80,420,550))
- v.add_child(label("DRIFT / RUSH",44))
- v.add_child(label("SAKURA VALLEY",24))
- v.add_child(label("OFFLINE TIME TRIAL · 3 LAPS",16))
- v.add_child(label("Find your line. Hold the drift.\nCharge your boost and chase the clock.",18))
- v.add_child(button("RACE NOW  →",race.start_race,true))
- v.add_child(button("CONTROLS & SOUND",open_settings))
- v.add_child(label("A / D  Steer     S  Brake\nSPACE  Drift     SHIFT  Boost\nTouch controls also available",17))
- v.add_child(label("Friends & item races: coming later",15))
+ flow=preload("res://Scripts/FrontendFlow.gd").new()
+ flow.setup(self,race)
  race_hud=root_control()
  var top := stack(race_hud,Rect2(28,24,340,100))
  top.add_child(label("SAKURA  /  TIME TRIAL",16))
@@ -111,6 +112,8 @@ func setup(owner_race: Node3D):
  meter=ProgressBar.new()
  meter.custom_minimum_size=Vector2(180,16)
  meter.show_percentage=false
+ meter.add_theme_stylebox_override("background",style(Color("14253d")))
+ meter.add_theme_stylebox_override("fill",style(Color("23cbe9")))
  center.add_child(meter)
  boost_status=label("DRIFT TO CHARGE",14)
  boost_status.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
@@ -150,12 +153,16 @@ func setup(owner_race: Node3D):
  build_settings()
  show_lobby()
 func show_lobby():
+ flow.hide_pages()
+ race.garage_view=false
  settings_panel.hide()
  lobby.show()
  race_hud.hide()
  pause_panel.hide()
  result.hide()
 func show_race():
+ flow.hide_pages()
+ race.garage_view=false
  settings_panel.hide()
  lobby.hide()
  race_hud.show()
@@ -169,6 +176,7 @@ func show_result(time: float):
   result_label.text+="\nLAP %d   %.2f s" % [i+1,race.lap_times[i]]
  result_label.text+="\nBEST   %.2f s" % race.best_lap
 func update_hud():
+ flow.update()
  stats.text="LAP %d / 3    %06.2f" % [mini(race.lap,3),race.elapsed]
  velocity_label.text="%03d km/h" % int(race.speed*3.6)
  meter.value=race.charge*100
@@ -181,6 +189,8 @@ func update_hud():
  count_label.text=str(ceili(race.countdown)) if race.countdown>0 else ""
 
 func open_settings():
+ flow.hide_pages()
+ race.garage_view=false
  return_to_pause=race.running
  lobby.hide()
  pause_panel.hide()

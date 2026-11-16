@@ -15,3 +15,6 @@ Physical iPhone/Android (not verified):
 
 ## Course guidance revision
 Course guidance update: follow gold road arrows; confirm next CP label is cyan and changes after passing. ESC pauses/resumes outside settings. Try PAUSE > RETURN TO TRACK after hitting a wall; race time/checkpoints must remain. Check the expanded pause menu fits on your screen.
+
+## Frontend UI/UX revision
+Frontend: PLAY → SELECT TRACK → START RACE; BACK returns to previous page. GARAGE: choose each color, rotate both directions, return and start race; selected color must appear on the kart and survive restart. HOW TO DRIVE: sensor unavailable on desktop is expected; phone tilt should move the bar after calibration. Check text/buttons fit in 4.7.2 and report any parser errors verbatim. Friends/item race/Neon City must remain disabled.

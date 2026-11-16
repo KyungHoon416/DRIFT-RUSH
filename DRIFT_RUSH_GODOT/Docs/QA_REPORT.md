@@ -15,3 +15,6 @@ PASS: 24 ordered checkpoint visits injected through physics loop produce three l
 
 ## Course guidance revision
 PASS: keyboard D steering, Space drift/gauge/lean/sparks, S braking, Shift boost; manual rescue resumes without altering clock/checkpoint; next gate highlighting. All three suites run through Tests/run_tests.py with timeout, exit status and script-error checks. Rendered signs, arrow visibility and Escape UI interaction still require manual viewing; tests do not establish mobile graphics or sensor readiness.
+
+## Frontend UI/UX revision
+PASS in Godot 4.6.3 headless: all four suites including exclusive frontend navigation, available/locked modes, 1280x720 button geometry, garage orbit activation, real material recoloring, paint persistence and race/HUD transition. No display server is available in this runtime, so rendered visuals and readability are NOT verified. Godot 4.7.2 is user-reported on Mac, not independently tested here. Device safe areas, different aspect ratios, real sensors and mobile exports remain unverified.

@@ -12,3 +12,6 @@ Added drift visual lean and CPU sparks, boost exhaust/synthesized sound/FOV, thr
 
 ## Course guidance revision
 Added TrackGuidance.gd: painted direction chevrons, eight labeled gates and highlighted next gate. Added pause-menu manual recovery and Escape pause toggle. New keyboard suite injects actual input events into the Godot loop.
+
+## Frontend UI/UX revision
+Added FrontendFlow.gd and TrackPreview.gd: branded lobby, mode/map selection, garage with four persisted paint colors and orbit controls, live tilt tutorial. UI panels/buttons styled with borders/focus/disabled states; unavailable content explicitly disabled. Added frontend navigation/material/persistence/layout suite.
