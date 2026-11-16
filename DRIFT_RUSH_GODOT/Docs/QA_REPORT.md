@@ -6,3 +6,6 @@ Known limitations: circular flat track; primitive art; fixed virtual HUD layout;
 
 ## UI revision validation
 PASS: lobby hides HUD, race transition, countdown blocks motion, reset clears touch/brake, return to lobby, result visibility, plus existing physics tests. HUD now uses anchored bottom/top-right controls; lobby/pause/result panels still target 1280x720 virtual canvas. Safe-area handling and rendered visual inspection remain unverified. Prior single-script/no-lobby limitation superseded by RaceUI separation.
+
+## Driving assistance QA
+PASS on 4.6.3 headless: simulated gravity calibration, missing-sensor fallback, deadzone, inversion, touch mode suppresses tilt, config save/load round trip, settings/lobby visibility, minimap projection, all previous smoke cases. NOT VERIFIED: actual device tilt axes/vibration, rendered minimap and settings layout, full race/manual reverse-driving. Added persistence and minimap supersede those earlier limitations. Settings save failure keeps the panel open and reports an error.

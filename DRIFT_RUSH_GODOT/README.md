@@ -17,3 +17,5 @@ iOS: use macOS, matching templates and Xcode; create an iOS export preset, set b
 This is an early offline prototype, not the complete specification. See Docs/QA_REPORT.md.
 
 UI revision: RACE NOW starts a three-second countdown. PAUSE offers resume, restart and return to lobby. HUD is hidden in lobby/results.
+
+Driving assistance revision: open CONTROLS & SOUND from lobby or pause. Tilt steering defaults on; desktop/sensorless devices retain touch arrows and keyboard. Choose touch mode to always show arrows. Sensitivity, deadzone, inversion, vibration and SFX volume persist in user://driving_settings.cfg. Neutral posture is runtime-only and recalibrated at race start/resume. Hold the device comfortably when starting. Minimap shows the kart (cyan), next checkpoint (gold) and finish (white). WRONG WAY indicates opposite heading; checkpoint acceptance now requires on-track forward heading. This is a local practice safeguard, not authoritative anti-cheat.

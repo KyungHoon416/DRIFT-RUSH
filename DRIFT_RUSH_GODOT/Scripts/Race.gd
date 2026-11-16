@@ -16,7 +16,8 @@ var steer := 0.0
 var touch := 0.0
 var braking := false
 var drifting := false
-var neutral := 0.0
+var settings = preload("res://Scripts/DrivingSettings.gd").new()
+var wrong_way := false
 var cooldown := 0.0
 var wheels: Array[MeshInstance3D] = []
 var audio: AudioStreamPlayer
@@ -45,6 +46,7 @@ func box(parent: Node3D, pos: Vector3, size: Vector3, color: Color, solid := fal
   body.add_child(collision)
  return m
 func _ready():
+ settings.load_settings()
  var sun := DirectionalLight3D.new()
  sun.rotation_degrees = Vector3(-45,-25,0)
  sun.light_energy = 1.3
@@ -153,6 +155,7 @@ func activate_boost():
   boost=2.5
   charge=0
 func start_race():
+ settings.calibrate(Input.get_gravity())
  reset()
  running=true
  countdown=3.0
@@ -162,6 +165,7 @@ func return_lobby():
  running=false
  ui.show_lobby()
 func toggle_pause():
+ if paused: settings.calibrate(Input.get_gravity())
  paused=not paused
  touch=0
  braking=false
@@ -183,6 +187,7 @@ func reset():
  charge=0
  boost=0
  paused=false
+ wrong_way=false
  camera.position=kart.position+Vector3(-8,5,0)
 func _physics_process(dt: float):
  if running and not paused and countdown>0:
@@ -191,7 +196,7 @@ func _physics_process(dt: float):
   elapsed+=dt
   cooldown=maxf(0,cooldown-dt)
   var input := float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT))
-  input=clampf(input+touch+(Input.get_gravity().x-neutral)/4,-1,1)
+  input=clampf(input+touch+settings.tilt_value(Input.get_gravity()),-1,1)
   steer=lerpf(steer,input,dt*8)
   var drift := (drifting or Input.is_physical_key_pressed(KEY_SPACE)) and absf(steer)>0.2 and speed>10
   speed=move_toward(speed,0 if braking or Input.is_physical_key_pressed(KEY_S) else (42 if boost>0 else 27),dt*12)
@@ -205,14 +210,17 @@ func _physics_process(dt: float):
     if absf(kart.get_slide_collision(i).get_normal().y)<0.5:
      speed*=0.6
      cooldown=0.3
-     audio.play()
-     Input.vibrate_handheld(60,0.4)
+     audio.volume_db=linear_to_db(maxf(settings.volume,0.0001))
+     if settings.volume>0: audio.play()
+     if settings.vibration: Input.vibrate_handheld(60,0.4)
   if drift: charge=minf(1,charge+dt*0.2)
   if Input.is_physical_key_pressed(KEY_SHIFT): activate_boost()
   boost=maxf(0,boost-dt)
   var angle := fposmod(atan2(kart.position.x,kart.position.z),TAU)
+  var tangent := Vector3(cos(angle),0,-sin(angle))
+  wrong_way=speed>3 and (-kart.global_basis.z).dot(tangent)<-0.35
   var target_angle := checkpoint*TAU/8
-  if absf(angle_difference(angle,fposmod(target_angle,TAU)))<0.12:
+  if not wrong_way and absf(Vector2(kart.position.x,kart.position.z).length()-RADIUS)<7 and absf(angle_difference(angle,fposmod(target_angle,TAU)))<0.12:
    checkpoint+=1
    if checkpoint==9:
     checkpoint=1
@@ -228,3 +236,7 @@ func _physics_process(dt: float):
  camera.position=camera.position.lerp(desired,1-exp(-5*dt))
  camera.look_at(kart.position+Vector3.UP)
  ui.update_hud()
+
+func _notification(what: int):
+ if what==NOTIFICATION_APPLICATION_FOCUS_OUT and running and not paused and is_instance_valid(ui):
+  toggle_pause()
