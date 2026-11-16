@@ -2,7 +2,8 @@ extends Node3D
 var kart: CharacterBody3D
 var camera: Camera3D
 var hud: Label
-var start_button: Button
+var ui: CanvasLayer
+var countdown := 0.0
 var speed := 0.0
 var charge := 0.0
 var boost := 0.0
@@ -74,11 +75,11 @@ func _ready():
     var r: float = RADIUS+side*14
     var base := Vector3(sin(a)*r,0,cos(a)*r)
     box(self,base+Vector3(0,2,0),Vector3(0.6,4,0.6),Color("78525f"))
-    for j in range(3):
+    for j in range(7):
      var s := SphereMesh.new()
-     s.radius = 2.6
-     s.height = 4.4
-     mesh(self,s,base+Vector3((j-1)*1.5,5+j%2,0),Color("ffb4d1") if j%2==0 else Color("f58db7"))
+     s.radius = 1.7
+     s.height = 2.9
+     mesh(self,s,base+Vector3(sin(j*2.4)*2,4.5+(j%3)*0.7,cos(j*2.4)*1.7),Color("ffb4d1") if j%2==0 else Color("f58db7"))
  for x in range(14):
   box(self,Vector3(0,0.28,58.5+x),Vector3(2,0.04,0.9),Color.WHITE if x%2==0 else Color("17213c"))
  box(self,Vector3(0,7,65),Vector3(0.8,1.5,18),Color("132e50"))
@@ -109,6 +110,21 @@ func _ready():
    var w := mesh(kart,tire,Vector3(x*0.9,0.45,z),Color("222b42"))
    w.rotation.z = PI/2
    wheels.append(w)
+ # Side pods, rear bumper, lights and exhaust give the kart a readable silhouette.
+ for side in [-1,1]:
+  box(kart,Vector3(side*0.78,0.85,0.15),Vector3(0.4,0.45,1.6),Color("e75c20"))
+  box(kart,Vector3(side*0.54,0.72,1.43),Vector3(0.38,0.14,0.08),Color("ff385d"))
+  box(kart,Vector3(side*0.48,0.45,1.48),Vector3(0.24,0.2,0.22),Color("47dfff"))
+  box(kart,Vector3(side*0.55,0.85,-1.43),Vector3(0.4,0.13,0.08),Color("b9f7ff"))
+ box(kart,Vector3(0,0.42,1.48),Vector3(1.6,0.15,0.15),Color("172638"))
+ box(kart,Vector3(0,0.93,-0.9),Vector3(0.2,0.4,0.9),Color("17334e"))
+ # Distant stylized hills, kept clear of the racing surface.
+ for i in range(12):
+  var mountain := CylinderMesh.new()
+  mountain.top_radius=2
+  mountain.bottom_radius=18
+  mountain.height=22+float(i%3)*8
+  mesh(self,mountain,Vector3(sin(i*TAU/12)*125,5,cos(i*TAU/12)*125),Color("7299ad"))
  camera = Camera3D.new()
  add_child(camera)
  camera.current = true
@@ -124,33 +140,10 @@ func _ready():
   bytes.encode_s16(i*2,int(sin(i*0.12)*18000*(1.0-i/4410.0)))
  wav.data = bytes
  audio.stream = wav
- var layer := CanvasLayer.new()
- add_child(layer)
- hud = Label.new()
- hud.position = Vector2(28,22)
- hud.add_theme_font_size_override("font_size",28)
- layer.add_child(hud)
- start_button = button(layer,"PLAY • SAKURA VALLEY",Vector2(440,310),func(): reset(); running=true; start_button.hide())
- button(layer,"◀",Vector2(24,600),func(): pass,touch_left)
- button(layer,"▶",Vector2(145,600),func(): pass,touch_right)
- button(layer,"BRAKE",Vector2(275,600),func(): pass,brake_hold)
- button(layer,"DRIFT",Vector2(1110,585),func(): pass,drift_hold)
- button(layer,"BOOST",Vector2(965,600),activate_boost)
- button(layer,"PAUSE",Vector2(1110,22),func(): paused=not paused)
- button(layer,"RESET",Vector2(1110,90),func(): reset(); running=true; start_button.hide())
- button(layer,"CALIBRATE",Vector2(24,90),func(): neutral=Input.get_gravity().x)
+ ui = preload("res://Scripts/RaceUI.gd").new()
+ add_child(ui)
+ ui.setup(self)
  reset()
-func button(parent: Node, title: String, pos: Vector2, action: Callable, hold: Callable = Callable()) -> Button:
- var b := Button.new()
- b.text = title
- b.position = pos
- b.custom_minimum_size = Vector2(115,68)
- parent.add_child(b)
- b.pressed.connect(action)
- if hold.is_valid():
-  b.button_down.connect(func(): hold.call(true))
-  b.button_up.connect(func(): hold.call(false))
- return b
 func touch_left(down: bool): touch = -1.0 if down else 0.0
 func touch_right(down: bool): touch = 1.0 if down else 0.0
 func brake_hold(down: bool): braking=down
@@ -159,9 +152,30 @@ func activate_boost():
  if charge>=1 and running and not paused:
   boost=2.5
   charge=0
+func start_race():
+ reset()
+ running=true
+ countdown=3.0
+ ui.show_race()
+func return_lobby():
+ reset()
+ running=false
+ ui.show_lobby()
+func toggle_pause():
+ paused=not paused
+ touch=0
+ braking=false
+ drifting=false
+ ui.pause_panel.visible=paused
 func reset():
  kart.position=Vector3(0,0.5,RADIUS)
  kart.rotation.y=-PI/2
+ kart.velocity=Vector3.ZERO
+ touch=0
+ steer=0
+ braking=false
+ drifting=false
+ countdown=0
  speed=0
  elapsed=0
  lap=1
@@ -171,7 +185,9 @@ func reset():
  paused=false
  camera.position=kart.position+Vector3(-8,5,0)
 func _physics_process(dt: float):
- if running and not paused:
+ if running and not paused and countdown>0:
+  countdown=maxf(0,countdown-dt)
+ if running and not paused and countdown<=0:
   elapsed+=dt
   cooldown=maxf(0,cooldown-dt)
   var input := float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT))
@@ -203,11 +219,12 @@ func _physics_process(dt: float):
     lap+=1
     if lap>3:
      running=false
-     start_button.text="FINISHED %.2fs • RACE AGAIN" % elapsed
-     start_button.show()
+     ui.show_result(elapsed)
   if kart.position.y < -4: reset()
   for w in wheels: w.rotate_y(speed*dt*2)
  var desired := kart.position+kart.global_basis.z*7+Vector3.UP*4
+ if not running:
+  desired=kart.position+Vector3(-5,2.8,5)
  camera.position=camera.position.lerp(desired,1-exp(-5*dt))
  camera.look_at(kart.position+Vector3.UP)
- hud.text="DRIFT RUSH    /    SAKURA VALLEY\nLAP %d / 3     %.2f s     %d km/h\nBOOST %d%%    %s" % [mini(lap,3),elapsed,int(speed*3.6),int(charge*100),"PAUSED" if paused else "OFFLINE PRACTICE"]
+ ui.update_hud()
