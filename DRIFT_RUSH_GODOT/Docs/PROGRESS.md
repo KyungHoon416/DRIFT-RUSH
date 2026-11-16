@@ -6,3 +6,6 @@ Separated lobby, race HUD, pause and results into RaceUI.gd. Added countdown, an
 
 ## Driving assistance revision
 Added DrivingSettings.gd, Minimap.gd; settings UI from lobby/pause, sensor fallback, automatic start/resume calibration, focus-loss pause, feedback preferences, heading-based reverse warning and on-track checkpoint gating. Expanded automated tests pass. Mobile axes/haptics and visual layout on actual devices remain unverified.
+
+## Driving feedback revision
+Added drift visual lean and CPU sparks, boost exhaust/synthesized sound/FOV, three-lap splits and session best, safe-position recovery preserving race progress. Added race_flow integration suite.

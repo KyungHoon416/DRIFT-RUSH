@@ -1,7 +1,16 @@
 extends Node3D
 var kart: CharacterBody3D
 var camera: Camera3D
-var hud: Label
+var visual: Node3D
+var flames: Array[MeshInstance3D] = []
+var sparks: Array[CPUParticles3D] = []
+var boost_audio: AudioStreamPlayer
+var lap_times: Array[float] = []
+var lap_started := 0.0
+var best_lap := 0.0
+var safe_angle := 0.0
+var recovery_notice := 0.0
+var is_drifting := false
 var ui: CanvasLayer
 var countdown := 0.0
 var speed := 0.0
@@ -95,31 +104,33 @@ func _ready():
  col.shape = shape
  col.position.y = 0.7
  kart.add_child(col)
- box(kart,Vector3(0,0.65,0),Vector3(1.8,0.5,2.8),Color("ff8b27"))
- box(kart,Vector3(0,0.95,-0.8),Vector3(1.4,0.35,1),Color("fff3df"))
- box(kart,Vector3(0,1.15,1),Vector3(2,0.15,0.5),Color("ff8b27"))
+ visual=Node3D.new()
+ kart.add_child(visual)
+ box(visual,Vector3(0,0.65,0),Vector3(1.8,0.5,2.8),Color("ff8b27"))
+ box(visual,Vector3(0,0.95,-0.8),Vector3(1.4,0.35,1),Color("fff3df"))
+ box(visual,Vector3(0,1.15,1),Vector3(2,0.15,0.5),Color("ff8b27"))
  var helmet := SphereMesh.new()
  helmet.radius = 0.48
  helmet.height = 0.9
- mesh(kart,helmet,Vector3(0,1.6,0.3),Color("ffc34b"))
- box(kart,Vector3(0,1.6,-0.12),Vector3(0.7,0.25,0.12),Color("193955"))
+ mesh(visual,helmet,Vector3(0,1.6,0.3),Color("ffc34b"))
+ box(visual,Vector3(0,1.6,-0.12),Vector3(0.7,0.25,0.12),Color("193955"))
  for x in [-1,1]:
   for z in [-0.9,0.9]:
    var tire := CylinderMesh.new()
    tire.top_radius = 0.4
    tire.bottom_radius = 0.4
    tire.height = 0.35
-   var w := mesh(kart,tire,Vector3(x*0.9,0.45,z),Color("222b42"))
+   var w := mesh(visual,tire,Vector3(x*0.9,0.45,z),Color("222b42"))
    w.rotation.z = PI/2
    wheels.append(w)
  # Side pods, rear bumper, lights and exhaust give the kart a readable silhouette.
  for side in [-1,1]:
-  box(kart,Vector3(side*0.78,0.85,0.15),Vector3(0.4,0.45,1.6),Color("e75c20"))
-  box(kart,Vector3(side*0.54,0.72,1.43),Vector3(0.38,0.14,0.08),Color("ff385d"))
-  box(kart,Vector3(side*0.48,0.45,1.48),Vector3(0.24,0.2,0.22),Color("47dfff"))
-  box(kart,Vector3(side*0.55,0.85,-1.43),Vector3(0.4,0.13,0.08),Color("b9f7ff"))
- box(kart,Vector3(0,0.42,1.48),Vector3(1.6,0.15,0.15),Color("172638"))
- box(kart,Vector3(0,0.93,-0.9),Vector3(0.2,0.4,0.9),Color("17334e"))
+  box(visual,Vector3(side*0.78,0.85,0.15),Vector3(0.4,0.45,1.6),Color("e75c20"))
+  box(visual,Vector3(side*0.54,0.72,1.43),Vector3(0.38,0.14,0.08),Color("ff385d"))
+  box(visual,Vector3(side*0.48,0.45,1.48),Vector3(0.24,0.2,0.22),Color("47dfff"))
+  box(visual,Vector3(side*0.55,0.85,-1.43),Vector3(0.4,0.13,0.08),Color("b9f7ff"))
+ box(visual,Vector3(0,0.42,1.48),Vector3(1.6,0.15,0.15),Color("172638"))
+ box(visual,Vector3(0,0.93,-0.9),Vector3(0.2,0.4,0.9),Color("17334e"))
  # Distant stylized hills, kept clear of the racing surface.
  for i in range(12):
   var mountain := CylinderMesh.new()
@@ -127,6 +138,44 @@ func _ready():
   mountain.bottom_radius=18
   mountain.height=22+float(i%3)*8
   mesh(self,mountain,Vector3(sin(i*TAU/12)*125,5,cos(i*TAU/12)*125),Color("7299ad"))
+ for side in [-1,1]:
+  var flame := SphereMesh.new()
+  flame.radius=0.15
+  flame.height=0.3
+  var jet := mesh(visual,flame,Vector3(side*0.48,0.45,1.8),Color("35dfff"))
+  jet.scale=Vector3(1,1,4)
+  jet.visible=false
+  flames.append(jet)
+  var particles := CPUParticles3D.new()
+  particles.position=Vector3(side*0.9,0.3,0.9)
+  particles.amount=24
+  particles.lifetime=0.3
+  particles.direction=Vector3(side,0.4,1)
+  particles.spread=25
+  particles.initial_velocity_min=1
+  particles.initial_velocity_max=3
+  particles.gravity=Vector3(0,-2,0)
+  particles.scale_amount_min=0.035
+  particles.scale_amount_max=0.09
+  particles.color=Color("ffcc58")
+  var spark := SphereMesh.new()
+  spark.radius=1
+  spark.height=2
+  particles.mesh=spark
+  particles.emitting=false
+  visual.add_child(particles)
+  sparks.append(particles)
+ boost_audio=AudioStreamPlayer.new()
+ add_child(boost_audio)
+ var boost_wav := AudioStreamWAV.new()
+ boost_wav.mix_rate=22050
+ boost_wav.format=AudioStreamWAV.FORMAT_16_BITS
+ var tone := PackedByteArray()
+ tone.resize(11025*2)
+ for i in range(11025):
+  tone.encode_s16(i*2,int(sin(i*0.045+i*i*0.000005)*9000*sin(PI*i/11025.0)))
+ boost_wav.data=tone
+ boost_audio.stream=boost_wav
  camera = Camera3D.new()
  add_child(camera)
  camera.current = true
@@ -151,9 +200,11 @@ func touch_right(down: bool): touch = 1.0 if down else 0.0
 func brake_hold(down: bool): braking=down
 func drift_hold(down: bool): drifting=down
 func activate_boost():
- if charge>=1 and running and not paused:
+ if charge>=1 and running and not paused and countdown<=0:
   boost=2.5
   charge=0
+  boost_audio.volume_db=linear_to_db(maxf(settings.volume,0.0001))
+  if settings.volume>0: boost_audio.play()
 func start_race():
  settings.calibrate(Input.get_gravity())
  reset()
@@ -172,6 +223,13 @@ func toggle_pause():
  drifting=false
  ui.pause_panel.visible=paused
 func reset():
+ lap_times.clear()
+ lap_started=0
+ best_lap=0
+ safe_angle=0
+ recovery_notice=0
+ is_drifting=false
+ boost_audio.stop()
  kart.position=Vector3(0,0.5,RADIUS)
  kart.rotation.y=-PI/2
  kart.velocity=Vector3.ZERO
@@ -194,11 +252,13 @@ func _physics_process(dt: float):
   countdown=maxf(0,countdown-dt)
  if running and not paused and countdown<=0:
   elapsed+=dt
+  recovery_notice=maxf(0,recovery_notice-dt)
   cooldown=maxf(0,cooldown-dt)
   var input := float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT))
   input=clampf(input+touch+settings.tilt_value(Input.get_gravity()),-1,1)
   steer=lerpf(steer,input,dt*8)
   var drift := (drifting or Input.is_physical_key_pressed(KEY_SPACE)) and absf(steer)>0.2 and speed>10
+  is_drifting=drift
   speed=move_toward(speed,0 if braking or Input.is_physical_key_pressed(KEY_S) else (42 if boost>0 else 27),dt*12)
   kart.rotation.y-=steer*dt*(1.5 if drift else 1.0)*minf(speed/12,1)
   var target := -kart.global_basis.z*speed
@@ -224,12 +284,26 @@ func _physics_process(dt: float):
    checkpoint+=1
    if checkpoint==9:
     checkpoint=1
+    var duration := elapsed-lap_started
+    lap_times.append(duration)
+    best_lap=duration if best_lap==0 else minf(best_lap,duration)
+    lap_started=elapsed
     lap+=1
     if lap>3:
      running=false
      ui.show_result(elapsed)
-  if kart.position.y < -4: reset()
+  var radial := Vector2(kart.position.x,kart.position.z).length()
+  if absf(radial-RADIUS)<5 and kart.position.y>0 and kart.position.y<2 and not wrong_way:
+   safe_angle=angle
+  if kart.position.y < -4 or absf(radial-RADIUS)>12:
+   recover_to_track()
   for w in wheels: w.rotate_y(speed*dt*2)
+ var active := running and not paused and countdown<=0
+ visual.rotation.z=lerpf(visual.rotation.z,-steer*0.14 if active and is_drifting else 0.0,1-exp(-8*dt))
+ for jet in flames: jet.visible=active and boost>0
+ for particles in sparks: particles.emitting=active and is_drifting
+ boost_audio.stream_paused=paused
+ camera.fov=lerpf(camera.fov,73.0 if active and boost>0 else 65.0,1-exp(-4*dt))
  var desired := kart.position+kart.global_basis.z*7+Vector3.UP*4
  if not running:
   desired=kart.position+Vector3(-5,2.8,5)
@@ -240,3 +314,17 @@ func _physics_process(dt: float):
 func _notification(what: int):
  if what==NOTIFICATION_APPLICATION_FOCUS_OUT and running and not paused and is_instance_valid(ui):
   toggle_pause()
+
+func recover_to_track():
+ # Return to the last safe on-road position; never skip a checkpoint or reset race time.
+ kart.position=Vector3(sin(safe_angle)*RADIUS,0.6,cos(safe_angle)*RADIUS)
+ kart.rotation.y=safe_angle-PI/2
+ kart.velocity=Vector3.ZERO
+ speed=0
+ boost=0
+ is_drifting=false
+ steer=0
+ touch=0
+ wrong_way=false
+ recovery_notice=2.0
+ camera.position=kart.position+kart.global_basis.z*7+Vector3.UP*4

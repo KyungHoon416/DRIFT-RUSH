@@ -59,4 +59,7 @@ func test():
  assert(projected.is_equal_approx(race.ui.minimap.size*0.5),"Minimap projects track origin")
  print("PASS: tilt calibration, sensor fallback, deadzone, inversion, settings persistence, touch mode, settings UI, minimap")
  print("PASS: acceleration, 3D movement, boost consumption, pause, reset, lobby/race/result transitions, countdown, input clearing")
+ race.queue_free()
+ await process_frame
+ await create_timer(0.2).timeout
  quit()

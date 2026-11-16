@@ -8,6 +8,8 @@ var stats: Label
 var velocity_label: Label
 var count_label: Label
 var result_label: Label
+var lap_detail: Label
+var boost_status: Label
 var meter: ProgressBar
 var settings_panel: Control
 var sensor_status: Label
@@ -78,6 +80,8 @@ func setup(owner_race: Node3D):
  top.add_child(label("SAKURA  /  TIME TRIAL",16))
  stats=label("",26)
  top.add_child(stats)
+ lap_detail=label("",17)
+ top.add_child(lap_detail)
  var pause := button("Ⅱ PAUSE",race.toggle_pause)
  race_hud.add_child(pause)
  pause.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
@@ -108,6 +112,9 @@ func setup(owner_race: Node3D):
  meter.custom_minimum_size=Vector2(180,16)
  meter.show_percentage=false
  center.add_child(meter)
+ boost_status=label("DRIFT TO CHARGE",14)
+ boost_status.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+ center.add_child(boost_status)
  bottom.add_child(button("BOOST",race.activate_boost,true))
  bottom.add_child(button("DRIFT",func(): pass,false,race.drift_hold))
  count_label=label("",76)
@@ -156,13 +163,18 @@ func show_race():
 func show_result(time: float):
  race_hud.hide()
  result.show()
- result_label.text="3 LAPS COMPLETED\nTIME  %.2f s" % time
+ result_label.text="TOTAL  %.2f s" % time
+ for i in range(race.lap_times.size()):
+  result_label.text+="\nLAP %d   %.2f s" % [i+1,race.lap_times[i]]
+ result_label.text+="\nBEST   %.2f s" % race.best_lap
 func update_hud():
  stats.text="LAP %d / 3    %06.2f" % [mini(race.lap,3),race.elapsed]
  velocity_label.text="%03d km/h" % int(race.speed*3.6)
  meter.value=race.charge*100
+ lap_detail.text="CURRENT %.2f   BEST %s" % [race.elapsed-race.lap_started,"—" if race.best_lap==0 else "%.2f" % race.best_lap]
+ boost_status.text="BOOST ACTIVE" if race.boost>0 else ("BOOST READY" if race.charge>=1 else "DRIFT TO CHARGE")
  minimap.queue_redraw()
- warning_label.text="WRONG WAY  •  TURN AROUND" if race.wrong_way else ""
+ warning_label.text="BACK ON TRACK" if race.recovery_notice>0 else ("WRONG WAY  •  TURN AROUND" if race.wrong_way else "")
  var show_arrows: bool = not race.settings.tilt_enabled or Input.get_gravity().length()<0.1
  for b in steer_buttons: b.visible=show_arrows
  count_label.text=str(ceili(race.countdown)) if race.countdown>0 else ""

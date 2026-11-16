@@ -9,3 +9,6 @@ PASS: lobby hides HUD, race transition, countdown blocks motion, reset clears to
 
 ## Driving assistance QA
 PASS on 4.6.3 headless: simulated gravity calibration, missing-sensor fallback, deadzone, inversion, touch mode suppresses tilt, config save/load round trip, settings/lobby visibility, minimap projection, all previous smoke cases. NOT VERIFIED: actual device tilt axes/vibration, rendered minimap and settings layout, full race/manual reverse-driving. Added persistence and minimap supersede those earlier limitations. Settings save failure keeps the panel open and reports an error.
+
+## Driving feedback revision
+PASS: 24 ordered checkpoint visits injected through physics loop produce three laps and results; splits sum to total, session best is minimum. Recovery preserves time/checkpoint. Boost visible state, pause freeze, expiry and reset pass. This is deterministic integration coverage, not a human-driven three-lap or rendered-effects test. Visual quality, audio listening, CPU particle mobile performance and device input remain unverified. See DEVICE_TEST_CHECKLIST.md.
